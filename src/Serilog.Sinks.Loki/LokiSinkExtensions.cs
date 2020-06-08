@@ -1,6 +1,7 @@
 using Serilog.Configuration;
 using Serilog.Sinks.Http;
 using Serilog.Sinks.Loki.Labels;
+using System.Collections;
 
 namespace Serilog.Sinks.Loki
 {
@@ -11,7 +12,7 @@ namespace Serilog.Sinks.Loki
         
         private static LoggerConfiguration LokiHttpImpl(this LoggerSinkConfiguration sinkConfiguration, LokiCredentials credentials, ILogLabelProvider logLabelProvider, IHttpClient httpClient)
         {
-            var formatter = logLabelProvider != null ? new LokiBatchFormatter(logLabelProvider.GetLabels()) : new LokiBatchFormatter();
+            var formatter = new LokiBatchFormatter(logLabelProvider?.GetLabels(), logLabelProvider?.GetLabelWhiteList());
             
             var client = httpClient ?? new LokiHttpClient();
             if (client is LokiHttpClient c)

@@ -12,5 +12,14 @@ namespace Serilog.Sinks.Loki.Tests.Infrastructure
                 new LokiLabel("app", "tests")
             };
         }
+
+        public IEnumerable<string> GetLabelWhiteList()
+        {
+            return new HashSet<string>
+            {
+                "app", "level"
+            };
+        }
+
     }
 }

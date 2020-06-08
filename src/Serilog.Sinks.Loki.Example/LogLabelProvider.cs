@@ -13,5 +13,13 @@ namespace Serilog.Sinks.Loki.Example
                 new LokiLabel("namespace", "prod")
             };
         }
+
+        public IEnumerable<string> GetLabelWhiteList()
+        {
+            return new HashSet<string>
+            {
+                "actorId",
+            };
+        }
     }
 }

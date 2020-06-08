@@ -14,15 +14,17 @@ namespace Serilog.Sinks.Loki
     internal class LokiBatchFormatter : IBatchFormatter 
     {
         private readonly IList<LokiLabel> _globalLabels;
+        private readonly HashSet<string> _labelWhiteList;
 
         public LokiBatchFormatter()
         {
             _globalLabels = new List<LokiLabel>();
         }
 
-        public LokiBatchFormatter(IList<LokiLabel> globalLabels)
+        public LokiBatchFormatter(IList<LokiLabel> globalLabels, IEnumerable<string> labelWhiteList)
         {
-            _globalLabels = globalLabels;
+            _globalLabels = globalLabels ?? new List<LokiLabel>();
+            _labelWhiteList = labelWhiteList != null ? new HashSet<string>(labelWhiteList) : null;
         }
 
         public void Format(IEnumerable<LogEvent> logEvents, ITextFormatter formatter, TextWriter output)
@@ -46,7 +48,8 @@ namespace Serilog.Sinks.Loki
                 foreach (LokiLabel globalLabel in _globalLabels)
                     stream.Labels.Add(new LokiLabel(globalLabel.Key, globalLabel.Value));
 
-                foreach (KeyValuePair<string, LogEventPropertyValue> property in logEvent.Properties)
+                foreach (KeyValuePair<string, LogEventPropertyValue> property in logEvent
+                    .Properties.Where(x => _labelWhiteList != null ? _labelWhiteList.Contains(x.Key) : true))
                     // Some enrichers pass strings with quotes surrounding the values inside the string,
                     // which results in redundant quotes after serialization and a "bad request" response.
                     // To avoid this, remove all quotes from the value.
