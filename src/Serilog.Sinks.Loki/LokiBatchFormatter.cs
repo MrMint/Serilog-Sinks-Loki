@@ -53,6 +53,8 @@ namespace Serilog.Sinks.Loki
                     stream.Labels.Add(new LokiLabel(globalLabel.Key, globalLabel.Value));
                 var labels = logEvent.Properties.Where(x => _labelWhiteList.Contains(x.Key));
 
+
+                jsonWriter.WriteStartObject();
                 foreach (KeyValuePair<string, LogEventPropertyValue> property in logEvent.Properties)
                 {
                     if (_labelWhiteList.Contains(property.Key))
@@ -65,7 +67,7 @@ namespace Serilog.Sinks.Loki
                         stream.Labels.Add(new LokiLabel(property.Key, property.Value.ToString().Replace("\"", "").Replace("\r\n", "\n").Replace("\\", "/")));
                     } else
                     {
-                        jsonWriter.WriteString(property.Key, property.Value.ToString().Replace("\"", ""));
+                        jsonWriter.WriteString(property.Key, property.Value.ToString().Replace("\"", "").Replace("\r\n", "\n").Replace("\\", "/"));
                     }
                 }
 
@@ -87,6 +89,7 @@ namespace Serilog.Sinks.Loki
                     }
                     jsonWriter.WriteString("exception", sb.ToString());
                 }
+                jsonWriter.WriteEndObject();
                 jsonWriter.Flush();
                 
                 stream.Entries.Add(new LokiEntry(time, Encoding.UTF8.GetString(buffer.WrittenSpan)));
