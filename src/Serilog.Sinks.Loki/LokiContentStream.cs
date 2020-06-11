@@ -2,15 +2,15 @@ namespace Serilog.Sinks.Loki
 {
     using System.Collections.Generic;
     using System.Text;
+    using System.Text.Json.Serialization;
     using Labels;
-    using Newtonsoft.Json;
 
     internal class LokiContentStream
     {
         [JsonIgnore]
         public List<LokiLabel> Labels { get; } = new List<LokiLabel>();
             
-        [JsonProperty("labels")]
+        [JsonPropertyName("labels")]
         public string LabelsString {
             get
             {
@@ -35,7 +35,7 @@ namespace Serilog.Sinks.Loki
         }
             
         
-        [JsonProperty("entries")]
+        [JsonPropertyName("entries")]
         public List<LokiEntry> Entries { get; set; } = new List<LokiEntry>();
     }
 }

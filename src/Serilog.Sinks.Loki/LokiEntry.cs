@@ -1,4 +1,5 @@
-using Newtonsoft.Json;
+
+using System.Text.Json.Serialization;
 
 namespace Serilog.Sinks.Loki
 {
@@ -10,10 +11,10 @@ namespace Serilog.Sinks.Loki
             Line = line;
         }
 
-        [JsonProperty("ts")]
+        [JsonPropertyName("ts")]
         public string Ts { get; set; }
 
-        [JsonProperty("line")]
+        [JsonPropertyName("line")]
         public string Line { get; set; }
     }
 }
