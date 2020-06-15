@@ -33,11 +33,6 @@ namespace Serilog.Sinks.Loki
         {
             content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
             return HttpClient.PostAsync(requestUri, content);
-            
-/*            var r = content.ReadAsStringAsync().Result;
-            var result = await HttpClient.PostAsync(requestUri, content);
-            var body = result.Content.ReadAsStringAsync().Result; //right!
-            return result;*/
         }
 
         public virtual void Dispose()

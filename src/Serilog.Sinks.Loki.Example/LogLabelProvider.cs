@@ -14,7 +14,7 @@ namespace Serilog.Sinks.Loki.Example
             };
         }
 
-        public IEnumerable<string> GetLabelWhiteList()
+        public IEnumerable<string> LabelNames()
         {
             return new HashSet<string>
             {

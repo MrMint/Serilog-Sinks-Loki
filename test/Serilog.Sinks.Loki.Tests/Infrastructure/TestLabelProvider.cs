@@ -13,7 +13,7 @@ namespace Serilog.Sinks.Loki.Tests.Infrastructure
             };
         }
 
-        public IEnumerable<string> GetLabelWhiteList()
+        public IEnumerable<string> LabelNames()
         {
             return new HashSet<string>
             {
