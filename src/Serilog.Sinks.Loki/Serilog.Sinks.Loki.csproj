@@ -23,6 +23,7 @@
         <None Include="../../assets/logo_128_128.png" Pack="true" PackagePath="/" />
     </ItemGroup>
     <ItemGroup>
+        <PackageReference Include="NodaTime" Version="3.0.0" />
         <PackageReference Include="Serilog" Version="2.9.0" />
         <PackageReference Include="Serilog.Sinks.Http" Version="5.2.1" />
         <PackageReference Include="MinVer" Version="2.1.0">

@@ -9,26 +9,23 @@ using Serilog.Sinks.Loki.Labels;
 
 namespace Serilog.Sinks.Loki
 {
+    using NodaTime;
     using System.Buffers;
     using System.Text;
     using System.Text.Json;
 
     internal class LokiBatchFormatter : IBatchFormatter
     {
-        private readonly IList<LokiLabel> _globalLabels;
+        private readonly IEnumerable<KeyValuePair<string, string>> _globalLabels;
         private readonly HashSet<string> _labelNames;
 
-        public LokiBatchFormatter()
+        public LokiBatchFormatter(IEnumerable<KeyValuePair<string, string>> globalLabels, IEnumerable<string> labelNames)
         {
-            _globalLabels = new List<LokiLabel>();
-        }
-
-        public LokiBatchFormatter(IList<LokiLabel> globalLabels, IEnumerable<string> labelNames)
-        {
-            _globalLabels = globalLabels ?? new List<LokiLabel>();
+            _globalLabels = globalLabels ?? new List<KeyValuePair<string, string>>();
             _labelNames = labelNames != null ? new HashSet<string>(labelNames) : new HashSet<string>();
         }
 
+        // Currently supports https://github.com/grafana/loki/blob/master/docs/api.md#post-lokiapiv1push
         public void Format(IEnumerable<LogEvent> logEvents, ITextFormatter formatter, TextWriter output)
         {
             if (logEvents == null)
@@ -40,77 +37,83 @@ namespace Serilog.Sinks.Loki
             if (!logs.Any())
                 return;
 
-            var outputBuffer = new ArrayBufferWriter<byte>();
-            using var jsonWriter = new Utf8JsonWriter(outputBuffer);
+            // process labels for grouping/sorting
+            var sortedStreams = logEvents
+                .GroupBy(x => x.Properties
+                    .Where(prop => _labelNames.Contains(prop.Key))
+                    .Select(prop => new KeyValuePair<string, string>(prop.Key, prop.Value.ToString().Replace("\"", "").Replace("\r\n", "\n").Replace("\\", "/")))
+                    .Concat(new[] { new KeyValuePair<string, string>("level", GetLevel(x.Level)) })
+                    .Concat(_globalLabels))
+                .Select(stream => new KeyValuePair<IEnumerable<KeyValuePair<string, string>>, IOrderedEnumerable<LogEvent>>(stream.Key, stream.OrderBy(log => log.Timestamp)));
 
             var logLineBuffer = new ArrayBufferWriter<byte>();
             using var logLineJsonWriter = new Utf8JsonWriter(logLineBuffer);
+            var outputBuffer = new ArrayBufferWriter<byte>();
+            using var jsonWriter = new Utf8JsonWriter(outputBuffer);
 
             jsonWriter.WriteStartObject();
             jsonWriter.WriteStartArray("streams");
 
-            foreach (LogEvent logEvent in logs)
+            foreach (var stream in sortedStreams)
             {
-                jsonWriter.WriteStartObject();
 
+                jsonWriter.WriteStartObject(); 
                 jsonWriter.WriteStartObject("stream");
-                jsonWriter.WriteString("level", GetLevel(logEvent.Level));
 
-                foreach (LokiLabel globalLabel in _globalLabels)
+                foreach (var label in stream.Key)
                 {
-                    jsonWriter.WriteString(globalLabel.Key, globalLabel.Value);
-                }
-                foreach (KeyValuePair<string, LogEventPropertyValue> property in logEvent.Properties.Where(x => _labelNames.Contains(x.Key)))
-                {
-                    jsonWriter.WriteString(property.Key, property.Value.ToString().Replace("\"", "").Replace("\r\n", "\n").Replace("\\", "/"));
+                    jsonWriter.WriteString(label.Key, label.Value);
                 }
 
                 jsonWriter.WriteEndObject();
 
                 jsonWriter.WriteStartArray("values");
-                jsonWriter.WriteStartArray();
 
-                var localTime = DateTime.Now;
-                var localTimeAndOffset = new DateTimeOffset(localTime, TimeZoneInfo.Local.GetUtcOffset(localTime));
-                var time = localTimeAndOffset.ToString("o");
-                jsonWriter.WriteStringValue(time);
-
-                logLineJsonWriter.WriteStartObject();
-                foreach (KeyValuePair<string, LogEventPropertyValue> property in logEvent.Properties.Where(x => !_labelNames.Contains(x.Key)))
+                foreach (var logEvent in stream.Value)
                 {
+                    jsonWriter.WriteStartArray();
+                    jsonWriter.WriteStringValue((Instant.FromDateTimeOffset(logEvent.Timestamp).ToUnixTimeTicks() * 100).ToString());
+
+                    // Construct a json object for the log line
+                    logLineJsonWriter.WriteStartObject();
+                    logLineJsonWriter.WriteString("message", logEvent.RenderMessage());
+
+                    foreach (var property in logEvent.Properties)
+                    {
                     // Some enrichers pass strings with quotes surrounding the values inside the string,
                     // which results in redundant quotes after serialization and a "bad request" response.
                     // To avoid this, remove all quotes from the value.
                     // We also remove any \r\n newlines and replace with \n new lines to prevent "bad request" responses
                     // We also remove backslashes and replace with forward slashes, Loki doesn't like those either
                     logLineJsonWriter.WriteString(property.Key, property.Value.ToString().Replace("\"", "").Replace("\r\n", "\n").Replace("\\", "/"));
-                }
-
-                logLineJsonWriter.WriteString("message", logEvent.RenderMessage());
-
-                if (logEvent.Exception != null)
-                {
-                    var sb = new StringBuilder();
-                    var e = logEvent.Exception;
-                    while (e != null)
-                    {
-                        sb.AppendLine(e.Message);
-                        sb.AppendLine(e.StackTrace);
-                        e = e.InnerException;
                     }
-                    logLineJsonWriter.WriteString("exception", sb.ToString());
-                }
-                logLineJsonWriter.WriteEndObject();
-                logLineJsonWriter.Flush();
 
-                jsonWriter.WriteStringValue(Encoding.UTF8.GetString(logLineBuffer.WrittenSpan));
-                jsonWriter.WriteEndArray();
+                    if (logEvent.Exception != null)
+                    {
+                        var sb = new StringBuilder();
+                        var e = logEvent.Exception;
+                        while (e != null)
+                        {
+                            sb.AppendLine(e.Message);
+                            sb.AppendLine(e.StackTrace);
+                            e = e.InnerException;
+                        }
+                        logLineJsonWriter.WriteString("exception", sb.ToString());
+                    }
+
+                    logLineJsonWriter.WriteEndObject();
+                    logLineJsonWriter.Flush();
+                    jsonWriter.WriteStringValue(Encoding.UTF8.GetString(logLineBuffer.WrittenSpan));
+                    jsonWriter.WriteEndArray();
+                    logLineBuffer.Clear();
+                }
+
                 jsonWriter.WriteEndArray();
                 jsonWriter.WriteEndObject();
             }
 
-            jsonWriter.WriteEndObject();
             jsonWriter.WriteEndArray();
+            jsonWriter.WriteEndObject();
             jsonWriter.Flush();
 
             output.Write(Encoding.UTF8.GetString(outputBuffer.WrittenSpan));

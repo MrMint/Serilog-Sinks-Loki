@@ -4,7 +4,7 @@ namespace Serilog.Sinks.Loki.Labels
 {
     public interface ILogLabelProvider
     {
-        IList<LokiLabel> GlobalLabels { get;  }
+        IEnumerable<KeyValuePair<string, string>> GlobalLabels { get;  }
         IEnumerable<string> LabelNames { get; }
     }
 }
