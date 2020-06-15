@@ -60,7 +60,7 @@ namespace Serilog.Sinks.Loki
             var sortedStreams = logEvents
                 .GroupBy(x => x.Properties
                     .Where(prop => _labelNames.Contains(prop.Key))
-                    .Select(prop => new KeyValuePair<string, string>(prop.Key, prop.Value.ToString().Replace("\"", "").Replace("\r\n", "\n").Replace("\\", "/")))
+                    .Select(prop => new KeyValuePair<string, string>(prop.Key, prop.Value?.ToString()?.Replace("\"", "")?.Replace("\r\n", "\n")?.Replace("\\", "/")))
                     .Concat(new[] { new KeyValuePair<string, string>("level", GetLevel(x.Level)) })
                     .Concat(_globalLabels).ToHashSet(), new HashSetComparer())
                 .Select(stream => new KeyValuePair<HashSet<KeyValuePair<string, string>>, IOrderedEnumerable<LogEvent>>(stream.Key, stream.OrderBy(log => log.Timestamp)));
@@ -103,7 +103,7 @@ namespace Serilog.Sinks.Loki
                     // To avoid this, remove all quotes from the value.
                     // We also remove any \r\n newlines and replace with \n new lines to prevent "bad request" responses
                     // We also remove backslashes and replace with forward slashes, Loki doesn't like those either
-                    logLineJsonWriter.WriteString(property.Key, property.Value.ToString().Replace("\"", "").Replace("\r\n", "\n").Replace("\\", "/"));
+                    logLineJsonWriter.WriteString(property.Key, property.Value?.ToString()?.Replace("\"", "")?.Replace("\r\n", "\n")?.Replace("\\", "/"));
                     }
 
                     if (logEvent.Exception != null)
@@ -116,7 +116,7 @@ namespace Serilog.Sinks.Loki
                             sb.AppendLine(e.StackTrace);
                             e = e.InnerException;
                         }
-                        logLineJsonWriter.WriteString("exception", sb.ToString());
+                        logLineJsonWriter.WriteString("exception", sb?.ToString());
                     }
 
                     logLineJsonWriter.WriteEndObject();
