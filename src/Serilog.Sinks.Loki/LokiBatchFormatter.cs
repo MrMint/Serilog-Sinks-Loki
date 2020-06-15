@@ -11,8 +11,27 @@ namespace Serilog.Sinks.Loki
 {
     using NodaTime;
     using System.Buffers;
+    using System.Security.Cryptography.X509Certificates;
     using System.Text;
     using System.Text.Json;
+
+    internal class HashSetComparer : IEqualityComparer<HashSet<KeyValuePair<string, string>>>
+    {
+        public bool Equals(HashSet<KeyValuePair<string, string>> x, HashSet<KeyValuePair<string, string>> y)
+        {
+            return !x.Except(y).Any();
+        }
+
+        public int GetHashCode(HashSet<KeyValuePair<string, string>> obj)
+        {
+            var hash = 19;
+            foreach(var pair in obj)
+            {
+                hash = hash * 31 + pair.Key.GetHashCode() + pair.Value.GetHashCode();
+            }
+            return hash;
+        }
+    }
 
     internal class LokiBatchFormatter : IBatchFormatter
     {
@@ -43,8 +62,8 @@ namespace Serilog.Sinks.Loki
                     .Where(prop => _labelNames.Contains(prop.Key))
                     .Select(prop => new KeyValuePair<string, string>(prop.Key, prop.Value.ToString().Replace("\"", "").Replace("\r\n", "\n").Replace("\\", "/")))
                     .Concat(new[] { new KeyValuePair<string, string>("level", GetLevel(x.Level)) })
-                    .Concat(_globalLabels))
-                .Select(stream => new KeyValuePair<IEnumerable<KeyValuePair<string, string>>, IOrderedEnumerable<LogEvent>>(stream.Key, stream.OrderBy(log => log.Timestamp)));
+                    .Concat(_globalLabels).ToHashSet(), new HashSetComparer())
+                .Select(stream => new KeyValuePair<HashSet<KeyValuePair<string, string>>, IOrderedEnumerable<LogEvent>>(stream.Key, stream.OrderBy(log => log.Timestamp)));
 
             var logLineBuffer = new ArrayBufferWriter<byte>();
             using var logLineJsonWriter = new Utf8JsonWriter(logLineBuffer);
@@ -56,7 +75,6 @@ namespace Serilog.Sinks.Loki
 
             foreach (var stream in sortedStreams)
             {
-
                 jsonWriter.WriteStartObject(); 
                 jsonWriter.WriteStartObject("stream");
 
@@ -105,6 +123,7 @@ namespace Serilog.Sinks.Loki
                     logLineJsonWriter.Flush();
                     jsonWriter.WriteStringValue(Encoding.UTF8.GetString(logLineBuffer.WrittenSpan));
                     jsonWriter.WriteEndArray();
+                    logLineJsonWriter.Reset();
                     logLineBuffer.Clear();
                 }
 

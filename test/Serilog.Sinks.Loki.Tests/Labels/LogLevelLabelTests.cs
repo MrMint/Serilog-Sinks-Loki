@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 using Serilog.Sinks.Loki.Tests.Infrastructure;
@@ -28,8 +29,10 @@ namespace Serilog.Sinks.Loki.Tests.Labels
             
             // Act
             log.Debug("Debug Level");
+            log.Debug("Debug Level 2");
+            log.Information("info Level");
             log.Dispose();
-            
+
             // Assert
             var response = JsonConvert.DeserializeObject<TestResponse>(_client.Content);
             response.Streams.First().Labels.ShouldBe("{level=\"debug\"}");
