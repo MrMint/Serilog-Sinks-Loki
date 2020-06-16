@@ -5,13 +5,11 @@ using System.Linq;
 using Serilog.Events;
 using Serilog.Formatting;
 using Serilog.Sinks.Http;
-using Serilog.Sinks.Loki.Labels;
 
 namespace Serilog.Sinks.Loki
 {
     using NodaTime;
     using System.Buffers;
-    using System.Security.Cryptography.X509Certificates;
     using System.Text;
     using System.Text.Json;
 
@@ -41,7 +39,7 @@ namespace Serilog.Sinks.Loki
         public LokiBatchFormatter(IEnumerable<KeyValuePair<string, string>> globalLabels, IEnumerable<string> labelNames)
         {
             _globalLabels = globalLabels ?? new List<KeyValuePair<string, string>>();
-            _labelNames = labelNames != null ? new HashSet<string>(labelNames) : new HashSet<string>();
+            _labelNames = new HashSet<string>(labelNames ?? new string[]{ });
         }
 
         // Currently supports https://github.com/grafana/loki/blob/master/docs/api.md#post-lokiapiv1push
@@ -135,7 +133,10 @@ namespace Serilog.Sinks.Loki
             jsonWriter.WriteEndObject();
             jsonWriter.Flush();
 
-            output.Write(Encoding.UTF8.GetString(outputBuffer.WrittenSpan));
+            var test =
+                Encoding.UTF8.GetString(outputBuffer.WrittenSpan);
+            output.Write(
+                test);
         }
 
         public void Format(IEnumerable<string> logEvents, TextWriter output)
