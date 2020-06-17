@@ -8,7 +8,7 @@ namespace Serilog.Sinks.Loki.Tests.Infrastructure
         {
             Streams = new List<Stream>();
         }
-        
+
         public IList<Stream> Streams { get; set; }
     }
 

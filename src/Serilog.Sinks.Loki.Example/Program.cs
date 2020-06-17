@@ -18,7 +18,7 @@ namespace Serilog.Sinks.Loki.Example
                         .WriteTo.Console()
                         .WriteTo.LokiHttp(credentials, new LogLabelProvider())
                         .CreateLogger();
-            
+
             log.Verbose("Verbose Text");
 
             int total = 3;
@@ -30,7 +30,7 @@ namespace Serilog.Sinks.Loki.Example
 
             try
             {
-                string invalidCast = (string) new object();
+                string invalidCast = (string)new object();
             }
             catch (Exception e)
             {

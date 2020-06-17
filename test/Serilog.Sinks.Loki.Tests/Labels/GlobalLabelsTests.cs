@@ -18,7 +18,7 @@ namespace Serilog.Sinks.Loki.Tests.Labels
             _client = new TestHttpClient();
             _credentials = new BasicAuthCredentials("http://test:80", "Walter", "White");
         }
-        
+
         [Fact]
         public void GlobalLabelsCanBeSet()
         {
@@ -27,11 +27,11 @@ namespace Serilog.Sinks.Loki.Tests.Labels
                 .MinimumLevel.Information()
                 .WriteTo.LokiHttp(_credentials, new TestLabelProvider(), _client)
                 .CreateLogger();
-            
+
             // Act
             log.Error("Something's wrong");
             log.Dispose();
-            
+
             // Assert
             var response = JsonConvert.DeserializeObject<TestResponse>(_client.Content);
             response.Streams.First().Labels.ShouldBe("{level=\"error\",app=\"tests\"}");

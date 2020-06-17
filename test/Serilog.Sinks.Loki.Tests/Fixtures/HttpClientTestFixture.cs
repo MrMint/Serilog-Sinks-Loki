@@ -9,7 +9,7 @@ namespace Serilog.Sinks.Loki.Tests
         public HttpClientTestFixture()
         {
         }
-        
+
         public void Dispose()
         {
         }

@@ -10,7 +10,7 @@ namespace Serilog.Sinks.Loki.ExampleWebApp
         public static int Main(string[] args)
         {
             var credentials = new NoAuthCredentials("http://localhost:3100");
-            
+
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -35,7 +35,7 @@ namespace Serilog.Sinks.Loki.ExampleWebApp
                 Log.CloseAndFlush();
             }
         }
-        
+
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>()

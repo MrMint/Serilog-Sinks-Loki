@@ -5,33 +5,14 @@ using System.Linq;
 using Serilog.Events;
 using Serilog.Formatting;
 using Serilog.Sinks.Http;
+using NodaTime;
+using System.Buffers;
+using System.Text;
+using System.Text.Json;
 
 namespace Serilog.Sinks.Loki
 {
-    using NodaTime;
-    using System.Buffers;
-    using System.Text;
-    using System.Text.Json;
-
-    internal class HashSetComparer : IEqualityComparer<HashSet<KeyValuePair<string, string>>>
-    {
-        public bool Equals(HashSet<KeyValuePair<string, string>> x, HashSet<KeyValuePair<string, string>> y)
-        {
-            return !x.Except(y).Any();
-        }
-
-        public int GetHashCode(HashSet<KeyValuePair<string, string>> obj)
-        {
-            var hash = 19;
-            foreach(var pair in obj)
-            {
-                hash = hash * 31 + pair.Key.GetHashCode() + pair.Value.GetHashCode();
-            }
-            return hash;
-        }
-    }
-
-    internal class LokiBatchFormatter : IBatchFormatter
+    public class LokiBatchFormatter : IBatchFormatter
     {
         private readonly IEnumerable<KeyValuePair<string, string>> _globalLabels;
         private readonly HashSet<string> _labelNames;
@@ -39,7 +20,7 @@ namespace Serilog.Sinks.Loki
         public LokiBatchFormatter(IEnumerable<KeyValuePair<string, string>> globalLabels, IEnumerable<string> labelNames)
         {
             _globalLabels = globalLabels ?? new List<KeyValuePair<string, string>>();
-            _labelNames = new HashSet<string>(labelNames ?? new string[]{ });
+            _labelNames = new HashSet<string>(labelNames ?? new string[] { });
         }
 
         // Currently supports https://github.com/grafana/loki/blob/master/docs/api.md#post-lokiapiv1push
@@ -59,7 +40,7 @@ namespace Serilog.Sinks.Loki
                 .GroupBy(x => x.Properties
                     .Where(prop => _labelNames.Contains(prop.Key))
                     .Select(prop => new KeyValuePair<string, string>(prop.Key, prop.Value?.ToString()?.Replace("\"", "")?.Replace("\r\n", "\n")?.Replace("\\", "/")))
-                    .Concat(new[] { new KeyValuePair<string, string>("level", GetLevel(x.Level)) })
+                    .Concat(_labelNames.Contains("level") ? new[] { new KeyValuePair<string, string>("level", GetLevel(x.Level)) } : new KeyValuePair<string, string>[] { })
                     .Concat(_globalLabels).ToHashSet(), new HashSetComparer())
                 .Select(stream => new KeyValuePair<HashSet<KeyValuePair<string, string>>, IOrderedEnumerable<LogEvent>>(stream.Key, stream.OrderBy(log => log.Timestamp)));
 
@@ -73,7 +54,7 @@ namespace Serilog.Sinks.Loki
 
             foreach (var stream in sortedStreams)
             {
-                jsonWriter.WriteStartObject(); 
+                jsonWriter.WriteStartObject();
                 jsonWriter.WriteStartObject("stream");
 
                 foreach (var label in stream.Key)
@@ -96,12 +77,12 @@ namespace Serilog.Sinks.Loki
 
                     foreach (var property in logEvent.Properties)
                     {
-                    // Some enrichers pass strings with quotes surrounding the values inside the string,
-                    // which results in redundant quotes after serialization and a "bad request" response.
-                    // To avoid this, remove all quotes from the value.
-                    // We also remove any \r\n newlines and replace with \n new lines to prevent "bad request" responses
-                    // We also remove backslashes and replace with forward slashes, Loki doesn't like those either
-                    logLineJsonWriter.WriteString(property.Key, property.Value?.ToString()?.Replace("\"", "")?.Replace("\r\n", "\n")?.Replace("\\", "/"));
+                        // Some enrichers pass strings with quotes surrounding the values inside the string,
+                        // which results in redundant quotes after serialization and a "bad request" response.
+                        // To avoid this, remove all quotes from the value.
+                        // We also remove any \r\n newlines and replace with \n new lines to prevent "bad request" responses
+                        // We also remove backslashes and replace with forward slashes, Loki doesn't like those either
+                        logLineJsonWriter.WriteString(property.Key, property.Value?.ToString()?.Replace("\"", "")?.Replace("\r\n", "\n")?.Replace("\\", "/"));
                     }
 
                     if (logEvent.Exception != null)
@@ -133,10 +114,7 @@ namespace Serilog.Sinks.Loki
             jsonWriter.WriteEndObject();
             jsonWriter.Flush();
 
-            var test =
-                Encoding.UTF8.GetString(outputBuffer.WrittenSpan);
-            output.Write(
-                test);
+            output.Write(Encoding.UTF8.GetString(outputBuffer.WrittenSpan));
         }
 
         public void Format(IEnumerable<string> logEvents, TextWriter output)
@@ -150,6 +128,24 @@ namespace Serilog.Sinks.Loki
                 return "info";
 
             return level.ToString().ToLower();
+        }
+    }
+
+    public class HashSetComparer : IEqualityComparer<HashSet<KeyValuePair<string, string>>>
+    {
+        public bool Equals(HashSet<KeyValuePair<string, string>> x, HashSet<KeyValuePair<string, string>> y)
+        {
+            return !x.Except(y).Any();
+        }
+
+        public int GetHashCode(HashSet<KeyValuePair<string, string>> obj)
+        {
+            var hash = 19;
+            foreach (var pair in obj)
+            {
+                hash = hash * 31 + pair.Key.GetHashCode() + pair.Value.GetHashCode();
+            }
+            return hash;
         }
     }
 }

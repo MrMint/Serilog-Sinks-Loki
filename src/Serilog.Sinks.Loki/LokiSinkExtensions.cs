@@ -8,12 +8,12 @@ namespace Serilog.Sinks.Loki
     public static class LokiSinkExtensions
     {
         public static LoggerConfiguration LokiHttp(this LoggerSinkConfiguration sinkConfiguration, LokiCredentials credentials, ILogLabelProvider labelProvider = null, LokiHttpClient httpClient = null)
-            => LokiHttpImpl(sinkConfiguration, credentials, labelProvider, httpClient); 
-        
+            => LokiHttpImpl(sinkConfiguration, credentials, labelProvider, httpClient);
+
         private static LoggerConfiguration LokiHttpImpl(this LoggerSinkConfiguration sinkConfiguration, LokiCredentials credentials, ILogLabelProvider logLabelProvider, IHttpClient httpClient)
         {
             var formatter = new LokiBatchFormatter(logLabelProvider?.GlobalLabels, logLabelProvider?.LabelNames);
-            
+
             var client = httpClient ?? new LokiHttpClient();
             if (client is LokiHttpClient c)
             {
