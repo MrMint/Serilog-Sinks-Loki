@@ -31,8 +31,7 @@ namespace Serilog.Sinks.Loki
             if (output == null)
                 throw new ArgumentNullException(nameof(output));
 
-            List<LogEvent> logs = logEvents.ToList();
-            if (!logs.Any())
+            if (!logEvents.Any())
                 return;
 
             // process labels for grouping/sorting
