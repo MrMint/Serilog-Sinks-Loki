@@ -17,11 +17,13 @@ namespace Serilog.Sinks.Loki
     {
         private readonly IEnumerable<KeyValuePair<string, string>> _globalLabels;
         private readonly HashSet<string> _labelNames;
+        private readonly bool _preserveTimestamps;
 
-        public LokiBatchFormatter(IEnumerable<KeyValuePair<string, string>> globalLabels, IEnumerable<string> labelNames)
+        public LokiBatchFormatter(IEnumerable<KeyValuePair<string, string>> globalLabels, IEnumerable<string> labelNames, bool preserveTimestamps)
         {
             _globalLabels = globalLabels ?? new List<KeyValuePair<string, string>>();
             _labelNames = new HashSet<string>(labelNames ?? new string[] { });
+            _preserveTimestamps = preserveTimestamps; 
         }
 
         // Some enrichers pass strings with quotes surrounding the values inside the string,
@@ -41,6 +43,8 @@ namespace Serilog.Sinks.Loki
 
             if (!logEvents.Any())
                 return;
+
+            var timestampOverride = SystemClock.Instance.GetCurrentInstant();
 
             // process labels for grouping/sorting
             var sortedStreams = logEvents
@@ -76,7 +80,9 @@ namespace Serilog.Sinks.Loki
                 foreach (var logEvent in stream.Value)
                 {
                     jsonWriter.WriteStartArray();
-                    jsonWriter.WriteStringValue((Instant.FromDateTimeOffset(logEvent.Timestamp).ToUnixTimeTicks() * 100).ToString());
+
+                    var timestamp = this._preserveTimestamps ? Instant.FromDateTimeOffset(logEvent.Timestamp) : timestampOverride;
+                    jsonWriter.WriteStringValue((timestamp.ToUnixTimeTicks() * 100).ToString());
 
                     // Construct a json object for the log line
                     logLineJsonWriter.WriteStartObject();
