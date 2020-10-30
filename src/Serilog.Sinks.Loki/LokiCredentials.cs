@@ -7,7 +7,7 @@ namespace Serilog.Sinks.Loki
             Url = url;
         }
     }
-    
+
     public class BasicAuthCredentials : LokiCredentials
     {
         public BasicAuthCredentials(string url, string username, string password)
@@ -16,14 +16,14 @@ namespace Serilog.Sinks.Loki
             Username = username;
             Password = password;
         }
-        
+
         public string Username { get; }
 
         public string Password { get; }
     }
-    
+
     public abstract class LokiCredentials
     {
-        public string Url { get; protected set; } 
+        public string Url { get; protected set; }
     }
 }

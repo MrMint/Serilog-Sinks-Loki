@@ -5,12 +5,17 @@ namespace Serilog.Sinks.Loki.Tests.Infrastructure
 {
     public class TestLabelProvider : ILogLabelProvider
     {
-        public IList<LokiLabel> GetLabels()
-        {
-            return new List<LokiLabel>
+        public IEnumerable<KeyValuePair<string, string>> GlobalLabels => new[]
             {
-                new LokiLabel("app", "tests")
+                new KeyValuePair<string, string>("app", "tests"),
             };
-        }
+
+        public bool PreserveOriginalTimestamp => false;
+
+        IEnumerable<string> ILogLabelProvider.LabelNames =>
+            new HashSet<string>
+            {
+                "app", "level"
+            };
     }
 }

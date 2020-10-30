@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
 using Serilog.Sinks.Loki.Tests.Infrastructure;
@@ -16,7 +17,7 @@ namespace Serilog.Sinks.Loki.Tests.Labels
             _client = new TestHttpClient();
             _credentials = new BasicAuthCredentials("http://test:80", "Walter", "White");
         }
-        
+
         [Fact]
         public void DebugLabelIsSet()
         {
@@ -25,16 +26,18 @@ namespace Serilog.Sinks.Loki.Tests.Labels
                 .MinimumLevel.Debug()
                 .WriteTo.LokiHttp(_credentials, httpClient: _client)
                 .CreateLogger();
-            
+
             // Act
             log.Debug("Debug Level");
+            log.Debug("Debug Level 2");
+            log.Information("info Level");
             log.Dispose();
-            
+
             // Assert
             var response = JsonConvert.DeserializeObject<TestResponse>(_client.Content);
             response.Streams.First().Labels.ShouldBe("{level=\"debug\"}");
         }
-        
+
         [Fact]
         public void InformationLabelIsSet()
         {
@@ -43,11 +46,11 @@ namespace Serilog.Sinks.Loki.Tests.Labels
                 .MinimumLevel.Information()
                 .WriteTo.LokiHttp(_credentials, httpClient: _client)
                 .CreateLogger();
-            
+
             // Act
             log.Information("Information Level");
             log.Dispose();
-            
+
             // Assert
             var response = JsonConvert.DeserializeObject<TestResponse>(_client.Content);
             response.Streams.First().Labels.ShouldBe("{level=\"info\"}");
@@ -61,11 +64,11 @@ namespace Serilog.Sinks.Loki.Tests.Labels
                 .MinimumLevel.Error()
                 .WriteTo.LokiHttp(_credentials, httpClient: _client)
                 .CreateLogger();
-            
+
             // Act
             log.Error("Error Level");
             log.Dispose();
-            
+
             // Assert
             var response = JsonConvert.DeserializeObject<TestResponse>(_client.Content);
             response.Streams.First().Labels.ShouldBe("{level=\"error\"}");

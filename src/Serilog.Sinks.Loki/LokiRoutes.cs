@@ -7,6 +7,6 @@ namespace Serilog.Sinks.Loki
             return host.Substring(host.Length - 1) != "/" ? $"{host}{PostDataUri}" : $"{host.TrimEnd('/')}{PostDataUri}";
         }
 
-        public const string PostDataUri = "/api/prom/push";
+        public const string PostDataUri = "/loki/api/v1/push";
     }
 }

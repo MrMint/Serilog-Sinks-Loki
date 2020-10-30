@@ -5,13 +5,18 @@ namespace Serilog.Sinks.Loki.Example
 {
     public class LogLabelProvider : ILogLabelProvider
     {
-        public IList<LokiLabel> GetLabels()
-        {
-            return new List<LokiLabel>
+        public IEnumerable<KeyValuePair<string, string>> GlobalLabels => new[]
             {
-                new LokiLabel("app", "demo"),
-                new LokiLabel("namespace", "prod")
+                new KeyValuePair<string, string>("app", "demo"),
+                new KeyValuePair<string, string>("namespace", "prod"),
             };
-        }
+
+        public bool PreserveOriginalTimestamp => false;
+
+        IEnumerable<string> ILogLabelProvider.LabelNames =>
+            new HashSet<string>
+            {
+                "actorId"
+            };
     }
 }

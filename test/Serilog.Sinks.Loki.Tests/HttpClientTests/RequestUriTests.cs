@@ -12,7 +12,7 @@ namespace Serilog.Sinks.Loki.Tests.HttpClientTests
         {
             _client = new TestHttpClient();
         }
-        
+
         [Theory]
         [InlineData("http://test:80")]
         [InlineData("http://test:80/")]
@@ -24,7 +24,7 @@ namespace Serilog.Sinks.Loki.Tests.HttpClientTests
                 .MinimumLevel.Information()
                 .WriteTo.LokiHttp(credentials, httpClient: _client)
                 .CreateLogger();
-            
+
             // Act
             log.Error("Something's wrong");
             log.Dispose();
