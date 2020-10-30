@@ -10,6 +10,8 @@ namespace Serilog.Sinks.Loki.Tests.Infrastructure
                 new KeyValuePair<string, string>("app", "tests"),
             };
 
+        public bool PreserveOriginalTimestamp => false;
+
         IEnumerable<string> ILogLabelProvider.LabelNames =>
             new HashSet<string>
             {

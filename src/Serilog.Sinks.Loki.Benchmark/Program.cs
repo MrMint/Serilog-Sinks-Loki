@@ -47,8 +47,9 @@ namespace Serilog.Sinks.Loki.Benchmark
                     new LogEventProperty(name, new ScalarValue(labelValues[random.Next(0, LABEL_CARDINALITY - 1)]))).ToList());
             }).ToList();
 
-            this.lokiBatchFormatter = new LokiBatchFormatter(null, this.LabelNames);
+            this.lokiBatchFormatter = new LokiBatchFormatter(null, this.LabelNames, false);
         }
+
         [Benchmark]
         public void format() => this.lokiBatchFormatter.Format(this.logEvents, null, this.textWriter);
     }

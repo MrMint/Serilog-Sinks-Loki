@@ -11,6 +11,8 @@ namespace Serilog.Sinks.Loki.Example
                 new KeyValuePair<string, string>("namespace", "prod"),
             };
 
+        public bool PreserveOriginalTimestamp => false;
+
         IEnumerable<string> ILogLabelProvider.LabelNames =>
             new HashSet<string>
             {

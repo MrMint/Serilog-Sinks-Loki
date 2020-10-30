@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFrameworks>netstandard2.1</TargetFrameworks>
         <AssemblyName>Serilog.Sinks.Loki</AssemblyName>
-        <PackageId>Serilog.Sinks.Loki</PackageId>
+        <PackageId>Reveal.Serilog.Sinks.Loki</PackageId>
         <PackageTags>loki,serilog,sinks</PackageTags>
         <title>Serilog.Sinks.Loki</title>
         <PackageReleaseNotes>https://github.com/JosephWoodward/Serilog-Sinks-Loki/releases/tag/v2.1.0</PackageReleaseNotes>
