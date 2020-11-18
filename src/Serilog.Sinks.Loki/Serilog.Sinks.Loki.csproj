@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.1</TargetFrameworks>
+        <TargetFrameworks>net5.0</TargetFrameworks>
         <AssemblyName>Serilog.Sinks.Loki</AssemblyName>
         <PackageId>Reveal.Serilog.Sinks.Loki</PackageId>
         <PackageTags>loki,serilog,sinks</PackageTags>
@@ -23,21 +23,20 @@
         <None Include="../../assets/logo_128_128.png" Pack="true" PackagePath="/" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="NodaTime" Version="3.0.0" />
-        <PackageReference Include="Serilog" Version="2.9.0" />
-        <PackageReference Include="Serilog.Sinks.Http" Version="5.2.1" />
+        <PackageReference Include="NodaTime" Version="3.0.3" />
+        <PackageReference Include="Serilog" Version="2.10.0" />
+        <PackageReference Include="Serilog.Sinks.Http" Version="7.2.0" />
         <PackageReference Include="MinVer" Version="2.1.0">
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="System.Text.Json" Version="4.7.2" />
+        <PackageReference Include="System.Text.Json" Version="5.0.0" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
       <PackageReference Include="System.Text.Json">
         <Version>4.7.2</Version>
       </PackageReference>
     </ItemGroup>
-
 </Project>

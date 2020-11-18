@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Serilog.Sinks.Http;
 
 namespace Serilog.Sinks.Loki
@@ -43,5 +44,8 @@ namespace Serilog.Sinks.Loki
             var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
             return Convert.ToBase64String(plainTextBytes);
         }
+
+        public void Configure(IConfiguration configuration)
+        { }
     }
 }
