@@ -93,6 +93,11 @@ namespace Serilog.Sinks.Loki
                         logLineJsonWriter.WriteString(property.Key, cleanseString(property.Value.ToString()));
                     }
 
+                    if(this._preserveTimestamps == false)
+                    {
+                        logLineJsonWriter.WriteString("timestamp",  Instant.FromDateTimeOffset(logEvent.Timestamp).ToString());
+                    } 
+
                     if (logEvent.Exception != null)
                     {
                         var sb = new StringBuilder();
